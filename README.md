@@ -23,8 +23,8 @@ After successfull deployment of war file to wildfly domain mode cluster do the e
 
 Access the Application's URL and open the web developer's tool and check the session Id. In web developer's tool if JSESSIONID ends with slave name as slave-1 then next time for the testing purpose stop slave-1 and refresh the page you will find JESSIONID value with same session id but different slave name as slave-2 and page count will be increased.
 
-![image](https://github.com/user-attachments/assets/14147f09-1f0e-4bb7-ade7-0113dd6c2e97)
-![image](https://github.com/user-attachments/assets/2a9a5561-8cd2-4ef7-9c7e-bf5a8811d853)
+![image](https://github.com/user-attachments/assets/7f910d28-3b4f-4e22-9d0b-af3325439cb9)
+![image](https://github.com/user-attachments/assets/a9b0dcd9-5763-4f5b-8bb5-54bb42733ff9)
 
 Finally check the entry of the database jgroups and table as shown in the screenshot below.
 
