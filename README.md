@@ -1,2 +1,2 @@
 # DevOps-Project-wildfly-session-replication
-![image](https://github.com/user-attachments/assets/3c51f02a-f284-495f-b795-10a27959ed97)
+![image](https://github.com/user-attachments/assets/d1478cee-5d16-4884-8bad-4082a6242454)
