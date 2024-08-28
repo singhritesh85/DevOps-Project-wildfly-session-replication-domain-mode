@@ -1,1 +1,1 @@
-# wildfly-session-replication
+# DevOps-Project-wildfly-session-replication
