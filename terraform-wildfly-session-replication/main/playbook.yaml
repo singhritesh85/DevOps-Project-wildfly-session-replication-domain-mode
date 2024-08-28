@@ -1,0 +1,138 @@
+---
+- name: Playbook to install Wildfly Application Server
+  hosts: all
+  become: yes
+  tasks:
+  - name: Install Java 1.8
+    yum:
+      name: java-1.8*
+      state: present
+  - name: entry for JAVA_HOME and PATH
+    lineinfile:
+      dest: /etc/profile
+      line: |
+              
+              JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.412.b08-1.amzn2.0.1.x86_64"
+              PATH="$PATH:$JAVA_HOME/bin:/usr/local/bin"
+  - name: download wildfly from the given link
+    get_url:
+      url: https://download.jboss.org/wildfly/11.0.0.Final/wildfly-11.0.0.Final.tar.gz
+      dest: /opt/
+  - name: unarchive wildfly tar file
+    unarchive:
+      src: /opt/wildfly-11.0.0.Final.tar.gz
+      dest: /opt/
+      remote_src: yes
+  - name: change directory name
+    shell: mv /opt/wildfly-11.0.0.Final /opt/wildfly-11
+  - name: copy domain.xml to wildfly master 
+    copy:
+      src: domain-master.xml
+      dest: /opt/wildfly-11/domain/configuration/domain.xml
+      force: yes
+    when: inventory_hostname in groups['master']
+  - name: copy host-master.xml to master
+    copy:
+      src: host-master.xml
+      dest: /opt/wildfly-11/domain/configuration/host-master.xml
+      force: yes
+    when: inventory_hostname in groups['master']
+  - name: create management user in wildfly
+    shell: /opt/wildfly-11/bin/add-user.sh -u admin -p dexter
+    when: inventory_hostname in groups['master']
+  - name: copy domain-slave.xml to slave-1
+    copy:
+      src: domain-slave.xml
+      dest: /opt/wildfly-11/domain/configuration/domain.xml
+      force: yes
+    when: inventory_hostname in groups['slave-1']
+  - name: copy domain-slave.xml to slave-2
+    copy:
+      src: domain-slave.xml
+      dest: /opt/wildfly-11/domain/configuration/domain.xml
+      force: yes
+    when: inventory_hostname in groups['slave-2'] 
+  - name: copy host-slave.xml to slave-1
+    copy:
+      src: host-slave.xml
+      dest: /opt/wildfly-11/domain/configuration/host-slave.xml
+      force: yes
+    when: inventory_hostname in groups['slave-1']
+  - name: copy host-slave.xml to slave-2
+    copy:
+      src: host-slave.xml
+      dest: /opt/wildfly-11/domain/configuration/host-slave.xml
+      force: yes
+    when: inventory_hostname in groups['slave-2']
+  - name: Add password to host-slave.xml on slave-1
+    replace:
+      path: /opt/wildfly-11/domain/configuration/host-slave.xml
+      regexp: '<secret value="dW5peA=="/>'
+      replace: '<secret value="ZGV4dGVyCg=="/>'   ### base64 encrypted password dexter
+    when: inventory_hostname in groups['slave-1']
+  - name: Add password to host-slave.xml on slave-2
+    replace:
+      path: /opt/wildfly-11/domain/configuration/host-slave.xml
+      regexp: '<secret value="dW5peA=="/>'
+      replace: '<secret value="ZGV4dGVyCg=="/>'   ### base64 encrypted password dexter
+    when: inventory_hostname in groups['slave-2']
+  - name: Add master private IP to host-master.xml on master
+    replace:
+      path: /opt/wildfly-11/domain/configuration/host-master.xml
+      regexp: 'MASTER_IP'
+      replace: "{{ groups['master'][0] }}"
+    when: inventory_hostname in groups['master']
+  - name: Add slave-1 private IP to host-slave.xml on slave-1
+    replace:
+      path: /opt/wildfly-11/domain/configuration/host-slave.xml
+      regexp: 'SLAVE_IP'
+      replace: "{{ groups['slave-1'][0] }}"
+    when: inventory_hostname in groups['slave-1']
+  - name: Add slave-2 private IP to host-slave.xml on slave-2
+    replace:
+      path: /opt/wildfly-11/domain/configuration/host-slave.xml
+      regexp: 'SLAVE_IP'
+      replace: "{{ groups['slave-2'][0] }}"
+    when: inventory_hostname in groups['slave-2']
+  - name: open port 8085 for wildfly
+    replace:
+      path: /opt/wildfly-11/domain/configuration/domain.xml
+      regexp: 'jboss.http.port:8080'
+      replace: 'jboss.http.port:8085' 
+  - name: replace slave-1 with slave-2 in host-slave.xml on slave-2
+    replace:
+      path: /opt/wildfly-11/domain/configuration/host-slave.xml
+      regexp: '"slave-1"'
+      replace: '"slave-2"'
+    when: inventory_hostname in groups['slave-2']
+  - name: create directory in wildfly
+    file:
+      path: /opt/wildfly-11/modules/system/layers/base/com/mysql/driver/main
+      state: directory
+      recurse: yes
+  - name: download mysql jdbc driver
+    get_url:
+      url: https://repo.maven.apache.org/maven2/mysql/mysql-connector-java/5.1.44/mysql-connector-java-5.1.44.jar
+      dest: /opt/wildfly-11/modules/system/layers/base/com/mysql/driver/main/
+  - name: create module.xml at the path /opt/wildfly-11/modules/system/layers/base/com/mysql/main
+    copy:
+      dest: /opt/wildfly-11/modules/system/layers/base/com/mysql/driver/main/module.xml
+      content: |
+          <module xmlns="urn:jboss:module:1.3" name="com.mysql.driver">
+            <resources>
+              <resource-root path="mysql-connector-java-5.1.44.jar" />
+            </resources>
+            <dependencies>
+              <module name="javax.api"/>
+              <module name="javax.transaction.api"/>
+            </dependencies>
+          </module>
+  - name: start wildfly on master
+    shell: nohup /opt/wildfly/bin/domain.sh --host-config="host-master.xml" --domain-config="domain.xml" &
+    when: inventory_hostname in groups['master']
+  - name: start wildfly on slave-1
+    shell: nohup /opt/wildfly/bin/domain.sh --host-config="host-slave.xml" --domain-config="domain.xml" & 
+    when: inventory_hostname in groups['slave-1']
+  - name: start wildfly on slave-2
+    shell: nohup /opt/wildfly/bin/domain.sh --host-config="host-slave.xml" --domain-config="domain.xml" &
+    when: inventory_hostname in groups['slave-2']
