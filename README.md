@@ -17,3 +17,26 @@ After we will ensure everything is fine go fo the deployment of war file as show
 ![image](https://github.com/user-attachments/assets/dc4de062-cac3-4c35-9907-781a27e93cfd)
 ![image](https://github.com/user-attachments/assets/78168822-fd36-41a6-8c34-e40d42292cfc)
 
+After successfull deployment of war file to wildfly domain mode cluster do the entry of NLB DNS name into the Route53 hosted zone and create the record set as shown in the screenshot below. 
+
+![image](https://github.com/user-attachments/assets/b6448ae7-70a7-4e7c-bf4a-143d89991508)
+
+Access the Application's URL and open the web developer's tool and check the session Id. In web developer's tool if JSESSIONID ends with slave name as slave-1 then next time for the testing purpose stop slave-1 and refresh the page you will find JESSIONID value with same session id but different slave name as slave-2 and page count will be increased.
+
+![image](https://github.com/user-attachments/assets/14147f09-1f0e-4bb7-ade7-0113dd6c2e97)
+![image](https://github.com/user-attachments/assets/2a9a5561-8cd2-4ef7-9c7e-bf5a8811d853)
+
+Finally check the entry of the database jgroups and table as shown in the screenshot below.
+
+![image](https://github.com/user-attachments/assets/96ffd096-4eaa-478b-9692-90c8e52c035c)
+
+<br><br/>
+<br><br/>
+<br><br/>
+<br><br/>
+<br><br/>
+<br><br/>
+```
+References:-       https://octopus.com/blog/wildfly-s3-domain-discovery
+                   https://octopus.com/blog/wildfly-jdbc-ping
+```
